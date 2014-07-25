@@ -10,6 +10,11 @@ use Doctrine\Common\Collections\ArrayCollection;
  * @ORM\Entity(repositoryClass="Livraria\Entity\CategoriaRepository")
  */
 class Categoria {
+    
+    public function __construct($options = null) {
+        Configurator::configure($this, $options);
+    }
+    
     /**
      * @ORM\Id
      * @ORM\Column(type="integer")
