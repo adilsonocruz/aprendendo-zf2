@@ -66,7 +66,7 @@ abstract class CRUDController extends AbstractActionController {
                 $service = $this->getServiceLocator()->get($this->service);
                 $service->update($request->getPost()->toArray());
 
-                return $this->redirect()->toRoute('livraria-admin', array('controller' => 'categorias'));
+                return $this->redirect()->toRoute($this->route, array('controller' => $this->controller));
             }
         }
           
