@@ -84,13 +84,19 @@ class User {
     }
 
     public function setPassword($password) {
+        $hash_senha = $this->encryptPassword($password);
+        
+        $this->password = $hash_senha;
+        return $this;
+    }
+    
+    public function encryptPassword($password) {
         $hash_senha = hash('sha512', $password . $this->salt);
         for ($i=0; $i<64000; $i++) {
             $hash_senha = hash('sha512', $hash_senha);            
         }
         
-        $this->password = $hash_senha;
-        return $this;
+        return $hash_senha;
     }
     
     public function toArray() {

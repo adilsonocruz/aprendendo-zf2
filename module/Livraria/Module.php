@@ -1,13 +1,20 @@
 <?php
 namespace Livraria;
 
-use Zend\Mvc\ModuleRouteListener;
-use Zend\Mvc\MvcEvent;
+use Zend\Mvc\ModuleRouteListener,
+    Zend\Mvc\MvcEvent,
+    Zend\ModuleManager\ModuleManager;
+
+use Zend\Authentication\AuthenticationService,
+    Zend\Authentication\Storage\Session as SessionStorage;
+
 use Livraria\Model\CategoriaTable;
 use Livraria\Service\Categoria as CategoriaService;
 use Livraria\Service\Livro as LivroService;
 use Livraria\Service\User as UserService;
 use LivrariaAdmin\Form\Livro as LivroFrm;
+
+use Livraria\Auth\Adapter as AuthAdapter;
 
 class Module
 {
@@ -26,6 +33,21 @@ class Module
                 ),
             ),
         );
+    }
+    
+    public function init(ModuleManager $moduleManager) {
+        $sharedEvents = $moduleManager->getEventManager()->getSharedManager();
+        $sharedEvents->attach("LivrariaAdmin", 'dispatch', function($e) {
+                    $auth = new AuthenticationService;
+                    $auth->setStorage(new SessionStorage("LivrariaAdmin"));
+
+                    $controller = $e->getTarget();
+                    $matchedRoute = $controller->getEvent()->getRouteMatch()->getMatchedRouteName();
+
+                    if (!$auth->hasIdentity() and ($matchedRoute == "livraria-admin" or $matchedRoute == "livraria-admin-interna")) {
+                        return $controller->redirect()->toRoute('livraria-admin-auth');
+                    }
+                }, 99);
     }
     
     public function getServiceConfig() {
@@ -52,8 +74,19 @@ class Module
                     $categorias = $repository->fetchPairs();
                     
                     return new LivroFrm(null, $categorias);
-                }
+                },
+               'Livraria\Auth\Adapter' => function($service) {
+                    return new AuthAdapter($service->get('Doctrine\ORM\EntityManager'));
+                }         
             )
         );        
+    }
+    
+    public function getViewHelperConfig() {
+        return array (
+            "invokables" => array(
+                "UserIdentity" => new View\Helper\UserIdentity
+            )
+        );
     }
 }
